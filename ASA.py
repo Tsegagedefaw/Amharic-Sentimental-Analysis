@@ -7,29 +7,26 @@ np.random.seed(42)
 
 #Exploratory Data Analysis
 
-pos_data = pd.read_csv('translate.csv')
-neg_data = pd.read_csv('negative.csv')
+pos_data = pd.read_csv('data/pos.csv')   
+neg_data = pd.read_csv('data/negative.csv')
 
 # data = shuffle(data)
 # data.head()
 
+# give columns name to dataset
 neg_data.columns = ['english','amharic']
 pos_data.columns = ['english','amharic']
-neg_data
+#print(neg_data)
 
-pos = pos_data.amharic.values[:50].tolist()
-neg = neg_data.amharic.values[:50].tolist()
+pos = pos_data.amharic.values[:400].tolist()
+neg = neg_data.amharic.values[:400].tolist()
 
 data = pd.concat([pd.DataFrame(pos+neg),pd.DataFrame(np.ones(50).tolist()+np.zeros(50).tolist())], axis=1) 
-data
-
+#print(data)
 data.columns = ['text','label']
-data.info()
+#print(data.info())
 
 #character level normalization
-#Amharic has characters wich have the same sound that can be interchangably used.
-#for example letters 'ሃ','ኅ','ኃ','ሐ','ሓ','ኻ','ሀ' have the same sound so we change them to 'ሀ'
-
 import re
 #method to normalize character level missmatch such as ጸሀይ and ፀሐይ
 def normalize_char_level_missmatch(input_token):
@@ -84,32 +81,36 @@ def normalize_char_level_missmatch(input_token):
     rep48=re.sub('[ኵ]','ኩ',rep47) #ኩ can be also written as ኵ  
     return rep48
 
-
 data['text'] = data['text'].apply(lambda x: normalize_char_level_missmatch(x))
-data
 
+#print(data)
 text,label = data['text'].values,data['label'].values
-label
+#print(label)
 
 #Naive Bays - CountVectorizer
 
-from sklearn.feature_extraction.text import CountVectorizer
-matrix = CountVectorizer(analyzer='word')
-X = matrix.fit_transform(text).toarray()
-X.shape
+#convert  a collection of text documents to a matrix of token counts.
+from sklearn.feature_extraction.text import CountVectorizer 
+matrix = CountVectorizer(analyzer='word') # countVectorizer analyze by word.
+X = matrix.fit_transform(text).toarray() # Learn the vocabulary dictionary and return document-term matrix.
+# print(X.shape)
+#print(matrix.get_feature_names()) # Array mapping from feature integer indices to feature name.
 
-# matrix.get_feature_names()
 
 unique_label = list(set(label))
 Y= []
 for i in label:
     Y.append(unique_label.index(i))
-    
 
-from sklearn.model_selection import train_test_split
+#print(unique_label)
+
+from sklearn.model_selection import train_test_split # Split arrays or matrices into random train and test subsets
 X_train, X_test, y_train, y_test = train_test_split(X, Y,test_size=0.2)
+#print(X_train.shape, X_test.shape)
+
 
 # training Naive Bayes 
+
 from sklearn.naive_bayes import GaussianNB
 classifier = GaussianNB()
 classifier.fit(X_train, y_train)
@@ -121,7 +122,7 @@ y_pred = classifier.predict(X_test)
 from sklearn.metrics import accuracy_score
 accuracy = accuracy_score(y_test, y_pred)
 
-accuracy
+print(accuracy)
 
 
 from pydantic import BaseModel
